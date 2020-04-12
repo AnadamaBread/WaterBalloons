@@ -1,0 +1,908 @@
+
+<!DOCTYPE html>
+
+
+<html><head>
+  <title>Hello Web - Processing.js Test</title>
+  <script src="https://raw.githubusercontent.com/processing-js/processing-js/v1.4.8/processing.js" type="text/javascript"></script>
+
+</head>
+<body><center>
+  
+  <canvas id="pdeCanvas" width = "900" height = "900"></canvas>
+
+</center></body>
+
+</html>
+
+<script type="text/processing" data-processing-target="pdeCanvas">
+
+  
+  boolean wk, ak, sk, dk, spacek, qk, rk; //control for keys pressed 
+  player playerOne;
+  int time_int;
+  int total_score;
+  int up_k;
+  int stage;
+  PImage bkg;
+  ArrayList <GameObject> engine;
+  
+  void setup() {
+    size(900,900);
+    bkg = loadImage("hallway.png");
+    songfile = new SoundFile(this, "waterballoons.wav");
+    restart();
+    //stage = 1;
+    //time_int = 0;
+    //total_score = 0;
+    //up_k = 0;
+    //engine = new ArrayList<GameObject>(10000); 
+    //rectMode(CENTER);
+    //songfile.loop(1,0.25);
+    //playerOne = new player();
+    //engine.add(playerOne);  
+    //engine.add(new Launcher());
+    //engine.add(new Epic_Launcher());
+  }
+  
+  void draw() {
+       
+    if(stage == 1 ) {
+       background(bkg);
+  
+      textAlign(CENTER);
+      textSize(80);
+      text("Water Balloon War", 450, 450);
+      textSize(35);
+      text("Press 'q' to start game",450,570);
+      if(qk) {
+       stage = 2; 
+      }
+      
+    }
+    
+    if( stage == 2 ) {
+       background(bkg);
+  
+  
+    
+    time_int = time_int + 1;
+    
+    fill(255,255,255);
+    textSize(12);
+    text("score", playerOne.x + 25, playerOne.y + 125);
+    fill(255,255,255);
+    text(total_score, playerOne.x + 75, playerOne.y + 125);
+    
+    int l = engine.size() - 1; //Last entry in the engine array
+    while ( l >= 0 ) {
+      
+      GameObject tmp = engine.get(l);
+      tmp.show();
+      tmp.beh();
+      if (tmp.isDead()) {
+        total_score = total_score + tmp.earnscore();
+        up_k = up_k + tmp.earnscore();
+        if(up_k >= 300){
+          playerOne.upgrade();
+          up_k = 0;
+        }
+         engine.remove(l); 
+      }
+      l--;
+      
+      if (total_score > 2500) {
+         engine.add(new Launcher());
+         engine.add(new Epic_Launcher());
+      }
+     
+     if(playerOne.isDead()) {
+       // engine.remove(playerOne);
+       stage = 3;
+       break;
+      
+    } 
+  }
+    
+    if(stage == 3) {
+      
+      background(bkg);
+      textAlign(CENTER);
+      textSize(80);
+      fill(255);
+      text("Game Over", 450, 450);
+      textSize(35);
+      fill(255);
+      text("Press 'q' to restart game",450,570);
+      if(qk) {
+        restart();
+        
+      }  
+    }
+    
+   // engine.add(new Enemy_one(width/2, height/2));
+    }
+  }
+  
+  void keyPressed() {
+    
+    if (key == 'w' || key == 'W') wk = true;
+    if (key == 'a' || key == 'A') ak = true;
+    if (key == 's' || key == 'S') sk = true;
+    if (key == 'd' || key == 'D') dk = true;
+    if (key == 'q' || key == 'Q') qk = true;
+    if (key == 'r' || key == 'R') rk = true;
+    if (key == ' ' ) spacek = true;
+    
+    if((key == 'q' || key == 'Q') && stage == 3) {
+       restart(); 
+    }
+    
+  
+  }
+  
+  void keyReleased() {
+    if (key == 'w' || key == 'W') wk = false;
+    if (key == 'a' || key == 'A') ak = false;
+    if (key == 's' || key == 'S') sk = false;
+    if (key == 'd' || key == 'D') dk = false;
+    if (key == 'q' || key == 'Q') qk = false;
+    if (key == 'r' || key == 'R') rk = false;
+    if (key == ' ' ) spacek = false;
+    
+  }
+  
+  void restart() {
+    
+    stage = 1;
+    frameCount = 0;
+    time_int = 0;
+    total_score = 0;
+    up_k = 0;
+    engine = new ArrayList<GameObject>(10000); 
+    rectMode(CENTER);
+    songfile.amp(0.25);
+    
+   songfile.loop();
+  
+    playerOne = new player();
+    engine.add(playerOne);  
+    engine.add(new Launcher());
+    engine.add(new Epic_Launcher());
+    draw();
+  }
+  abstract class GameObject {
+  
+    float x, y, vx, vy; // Positions x and y, Veclocity vx and vy
+    
+    float hp; // hitpoints
+    int score = 0;
+    int power = 0;
+    
+    GameObject() {
+      
+    }
+    
+    void show() {
+      // Rendering and Effects  
+    
+    }
+  
+    void beh() {
+     //Actions and behavior
+     
+    }
+    
+    boolean isDead() {
+      // is it dead ?
+      return false;
+    }
+    
+    int earnscore() {
+     return 0; 
+    }
+    
+    
+  }
+
+  // Guns pretty much
+abstract class balloon {
+ 
+  int cooldown, threshold; 
+  
+  balloon() {
+  }
+  
+  void recharge() {
+    if(cooldown < threshold) {
+      cooldown++; 
+    }
+  
+  }
+  
+  
+  void shoot() {
+    if( cooldown == threshold) {
+      engine.add(new Bullet());
+      cooldown = 0;
+    }
+    
+  }
+  
+  
+}
+
+class Basicball extends balloon {
+  
+ 
+  Basicball () {
+    
+    threshold = 35;
+    cooldown = 35;
+    
+  }
+  
+}
+
+class Fastball extends balloon {
+  
+   Fastball () {
+     
+     threshold = 7;
+     cooldown = 7;
+     
+   }
+  
+}
+
+class Doubleball extends balloon {
+  
+   Doubleball () {
+     
+     threshold = 30;
+     cooldown = 30;
+   }
+   
+   void shoot() {
+     
+      if( cooldown == threshold) {
+          engine.add(new Bullet(playerOne.x + 25, playerOne.y + 5, 0, -12));
+          engine.add(new Bullet(playerOne.x + 45, playerOne.y + 5, 0, -12));
+        cooldown = 0;
+      }
+   }
+}
+
+class Tripleball extends balloon {
+  
+   Tripleball () {
+     
+     threshold = 30;
+     cooldown = 30;
+   }
+   
+   void shoot() {
+     
+      if( cooldown == threshold) {
+          engine.add(new Bullet(playerOne.x + 25, playerOne.y + 5, 0, -12));
+          engine.add(new Bullet(playerOne.x + 45, playerOne.y + 5, 0, -12));
+          engine.add(new Bullet(playerOne.x + 65, playerOne.y + 5, 0, -12));
+        cooldown = 0;
+      }
+   }
+}
+
+class Doublefastball extends balloon {
+ 
+  Doublefastball() {
+   threshold = 7;
+   cooldown = 7;
+    
+  }
+  void shoot() {
+     
+      if( cooldown == threshold) {
+          engine.add(new Bullet(playerOne.x + 25, playerOne.y + 5, 0, -12));
+          engine.add(new Bullet(playerOne.x + 45, playerOne.y + 5, 0, -12));
+        cooldown = 0;
+      }
+   }
+  
+}
+
+class Triplefastball extends balloon {
+   
+  Triplefastball () {   
+     threshold = 7;
+     cooldown = 7;
+   }
+   
+   void shoot() {
+     
+      if( cooldown == threshold) {
+          engine.add(new Bullet(playerOne.x + 25, playerOne.y + 5, 0, -12));
+          engine.add(new Bullet(playerOne.x + 45, playerOne.y + 5, 0, -12));
+          engine.add(new Bullet(playerOne.x + 65, playerOne.y + 5, 0, -12));
+        cooldown = 0;
+      }
+   }
+}
+
+class Bullet extends GameObject {
+ 
+  Bullet() {
+   x = playerOne.x + 30;
+   y = playerOne.y + 5;
+   vx = 0;
+   vy = -12;
+   hp = 1;
+  }
+  
+  Bullet(float x, float y, int vx, int vy) {
+   this.x = x;
+   this.y = y;
+   this.vx = vx;
+   this.vy = vy;
+   hp = 1;
+   
+  }
+  
+  void show() {
+   fill(0,52,250);
+   circle(x,y,10);
+  }
+  
+  void beh(){
+   x = x + vx;
+   y = y + vy;
+  }
+  
+  boolean isDead() {
+   return y < 0; 
+  }
+  
+}
+
+class damage_effect extends GameObject {
+ 
+  damage_effect(float incomingX, float incomingY) {
+   x = incomingX;
+   y = incomingY;
+   vx = random(-10,10);
+   vy = random(-10,10);
+   hp = random(150,255);
+   
+  }
+  
+  void show() {
+    fill(0,100,225,hp);
+    rect(x,y,5,5);
+    
+  }
+  
+  void beh() {
+   x = x + vx;
+   y = y + vy;
+   
+   hp = hp - 3;
+   
+  }
+  
+  boolean isDead() {
+   
+    
+    return hp <= 0;
+    
+  }
+}
+
+class Enemy_one extends GameObject {
+ 
+  PImage img;
+  
+  Enemy_one(float incomingX, float incomingY) {
+    x = incomingX;
+    y = incomingY;
+    vx = 0;
+    vy = 6;
+    hp = 10;
+    img = loadImage("book.png");
+    score = 20;
+  
+  }
+  
+  void show() {
+    // fill(100,100,125);
+    // rect(x,y,75,75);
+    image(img,x,y);
+  }
+  
+  void beh() {
+    x = x + vx;
+    y = y + vy;
+    
+    int i = 0;
+    while ( i < engine.size()) {
+     
+      GameObject p_bullet = engine.get(i);
+      
+      if ( p_bullet instanceof Bullet) {
+         
+         if (rectRekt(x, y, 75, 75, p_bullet.x, p_bullet.y, 10, 10)) {
+           
+           hp = hp - 1;
+           p_bullet.hp = 0;
+           engine.add(new damage_effect(p_bullet.x, p_bullet.y));
+           
+         }
+        
+      }
+      i++;
+    }
+    
+  }
+  
+  boolean isDead() {
+      
+    return y > height || hp <= 0;
+  }
+  
+  int earnscore() {
+    
+    if(hp <= 0 && isDead()) {
+      return score;
+    }
+    else {
+     return 0; 
+    }
+    
+  }
+
+
+
+// Collision Function for Rectangles 
+
+boolean rectRekt(float r1x, float r1y, float r1w, float r1h, float r2x, float r2y, float r2w, float r2h) {
+  
+  
+  if ( r1x + r1w >= r2x &&  // r1 right edge past r2 left
+  
+       r1y + r1h >= r2y &&  // r1 left edge past r2 right
+       
+       r1x <= r2x + r2w &&  // r1 top ege past r2 bottom
+       
+       r1y <= r2y + r2h)    // r1 bottom edge past r2 top
+       
+       {
+         return true;
+   }
+   else {
+     return false;
+   }
+}
+      
+
+}
+
+class Enemy_two extends GameObject {
+ 
+  PImage img;
+  
+  Enemy_two(float incomingX, float incomingY) {
+    x = incomingX;
+    y = incomingY;
+    vx = 0;
+    vy = 3;
+    hp = 50;
+    img = loadImage("locker.png");
+    score = 100;
+  
+  }
+  
+  void show() {
+    // fill(100,100,125);
+    // rect(x,y,75,75);
+    image(img,x,y);
+  }
+  
+  void beh() {
+    x = x + vx;
+    y = y + vy;
+    
+    int i = 0;
+    while ( i < engine.size()) {
+     
+      GameObject p_bullet = engine.get(i);
+      
+      if ( p_bullet instanceof Bullet) {
+         
+         if (rectRekt(x, y, 75, 75, p_bullet.x, p_bullet.y, 10, 10)) {
+           
+           hp = hp - 1;
+           p_bullet.hp = 0;
+           engine.add(new damage_effect(p_bullet.x, p_bullet.y));
+           
+         }
+        
+      }
+      i++;
+    }
+    
+  }
+  
+  boolean isDead() {
+      
+    return y > height || hp <= 0;
+  }
+  
+  int earnscore() {
+    
+    if(hp <= 0 && isDead()) {
+      return score;
+    }
+    else {
+     return 0; 
+    }
+    
+  }
+
+
+
+// Collision Function for Rectangles 
+
+boolean rectRekt(float r1x, float r1y, float r1w, float r1h, float r2x, float r2y, float r2w, float r2h) {
+  
+  
+  if ( r1x + r1w >= r2x &&  // r1 right edge past r2 left
+  
+       r1y + r1h >= r2y &&  // r1 left edge past r2 right
+       
+       r1x <= r2x + r2w &&  // r1 top ege past r2 bottom
+       
+       r1y <= r2y + r2h)    // r1 bottom edge past r2 top
+       
+       {
+         return true;
+   }
+   else {
+     return false;
+   }
+}
+      
+
+  
+  
+  
+  
+}
+
+class Launcher extends GameObject {
+ 
+  Launcher() {
+    x = width/2;
+    y = -100;
+    vx = 0;
+    vy = 0;
+    
+  }
+  void show() {
+   fill (100);
+   ellipse(x,y,100,100);
+   
+  }
+  
+  void beh() {
+     if (frameCount < 100) {
+       // do nothing 
+     
+   } else if (frameCount < 600) {
+      straightLine(100);
+     
+   } else if (frameCount < 1500) {
+       straightLine(400);
+     }
+      else if (frameCount < 2500) {
+       randLine();
+     }
+     else {
+       endGame();
+     }
+ }
+  
+  void straightLine(float incomingX) {
+   x = incomingX;
+   if (frameCount % 100 == 0) {
+     engine.add(new Enemy_one(x,y)); 
+   }
+  }
+  
+  void randLine() {
+   x = random(50, 850); 
+    if(frameCount % 100 == 0){
+     engine.add(new Enemy_one(x,y)); 
+    }
+  }
+  
+  void endGame(){
+   
+   x = random(50, 850);
+     if(frameCount % 50 == 0) {
+       engine.add(new Enemy_one(x,y));
+       if(frameCount % 100 == 0) {
+         engine.add(new Enemy_one(random(50,850),y));
+       }  
+     }
+     if(frameCount > 3100) {
+       extraStraightLine();
+     }
+  }
+  
+  void extraStraightLine() {
+    if(frameCount % 500 == 0){
+      for (int x = 0; x <= 850; x += 50) {
+       engine.add(new Enemy_one(x,y)); 
+      }
+     } 
+    }
+  
+  
+  
+  boolean isDead() {
+    
+   return false; 
+  }
+  
+  
+}
+
+class Epic_Launcher extends GameObject {
+ 
+  Epic_Launcher() {
+    x = width/2;
+    y = -100;
+    vx = 0;
+    vy = 0;
+    
+  }
+  void show() {
+   fill (100);
+   ellipse(x,y,100,100);
+   
+  }
+  
+  void beh() {
+     if (frameCount < 1500) {
+       // do nothing 
+     
+   } else if (frameCount < 1600) {
+      straightLine(100);
+     
+   } else if (frameCount < 2000) {
+       straightLine(400);
+     }
+      else if (frameCount < 4000) {
+       randLine();
+     }
+     else {
+       endGame();
+     
+     }
+ }
+  
+  void straightLine(float incomingX) {
+   x = incomingX;
+   if (frameCount % 400 == 0) {
+     engine.add(new Enemy_two(x,y)); 
+   }
+  }
+  
+  void randLine() {
+   x = random(50, 850); 
+    if(frameCount % 300 == 0){
+     engine.add(new Enemy_two(x,y)); 
+    }
+  }
+  
+  void endGame() {
+   x = random(50,850);
+   if(frameCount % 250 == 0) {
+    engine.add(new Enemy_two(x,y)); 
+   }
+  }
+  
+  
+  
+  boolean isDead() {
+    
+   return false; 
+  }
+  
+  
+}
+
+class player extends GameObject {
+  
+  PImage img;
+  balloon playerGun;
+  boolean death;
+  
+  player() { //Constructor
+    x = width/2;
+    y = height/2;
+    vx = 0;
+    vy = 0;
+    img = loadImage("Waterbomb.png");
+    power = 25;
+    playerGun = new Basicball();
+    death = false;
+  }
+  
+  void show() {
+   // fill(255,0,0);
+   // circle(x,y,50);
+   image(img,x,y);
+   
+   // fill(255,0,0);
+   //  circle(x + 55 ,y + 50,50);  PERFECT BALLOON HIT CIRCLE
+   
+    
+  }
+  
+  void beh() {
+    vx = 0;
+    vy = 0;
+    if (wk) {
+      vy = -10;
+    }
+    if (ak) {
+      vx = -10;
+    }
+    if (sk) {
+      vy = 10;
+    }
+    if (dk) {
+      vx = 10;
+    }
+    
+    if(spacek){
+      // engine.add(new Bullet());
+      playerGun.shoot();
+      // shoot(power);
+    }
+    
+     int i = 0;
+    while ( i < engine.size()) {
+     
+      GameObject p_enemy = engine.get(i);
+      
+      if ( p_enemy instanceof Enemy_one) {
+         
+         if (rectRekt(x + 55, y + 50, 50, 50, p_enemy.x, p_enemy.y, 75, 75)) {
+           
+           //hp = hp - 1;
+           p_enemy.hp = 0;
+           engine.add(new damage_effect(p_enemy.x, p_enemy.y));
+           this.death = true;
+         }
+        
+      }
+      
+      if ( p_enemy instanceof Enemy_two) {
+         
+         if (rectRekt(x + 55, y + 50, 50, 50, p_enemy.x, p_enemy.y, 75, 175)) {
+           
+           //hp = hp - 1;
+           p_enemy.hp = 0;
+           engine.add(new damage_effect(p_enemy.x, p_enemy.y));
+           this.death = true;
+         }
+        
+      }
+      i++;
+    }
+    
+    if(((x+vx) > -50) && ((x+vx)<850)){
+       x = x + vx;
+    }
+    if(((y+vy) > 50) && ((y+vy)<850)) {
+      
+      y = y + vy;
+    }
+    
+    playerGun.recharge();
+    
+  }
+  
+  boolean isDead() {
+    
+  
+    return this.death;
+    // return false;
+  }
+
+
+
+// Collision Function for Rectangles 
+
+boolean rectRekt(float r1x, float r1y, float r1w, float r1h, float r2x, float r2y, float r2w, float r2h) {
+  
+  
+  if ( r1x + r1w >= r2x &&  // r1 right edge past r2 left
+  
+       r1y + r1h >= r2y &&  // r1 left edge past r2 right
+       
+       r1x <= r2x + r2w &&  // r1 top ege past r2 bottom
+       
+       r1y <= r2y + r2h)    // r1 bottom edge past r2 top
+       
+       {
+         return true;
+   }
+   else {
+     return false;
+   }
+}
+      
+
+  
+  void upgrade(){
+    if(playerGun instanceof Basicball) {
+      this.playerGun = new Doubleball(); 
+    }
+    else if( playerGun instanceof Doubleball){
+      this.playerGun = new Tripleball(); 
+    }
+    else if( playerGun instanceof Tripleball) {
+      this.playerGun = new Fastball(); 
+    }
+    else if ( playerGun instanceof Fastball) {
+      this.playerGun = new  Doublefastball();
+    }
+    else if ( playerGun instanceof Doublefastball) {
+      this.playerGun = new Triplefastball(); 
+    }
+    else {
+     // do nothing for now 
+    }
+    
+    
+  }
+  
+  //void shoot(int a) {
+  //  // int j = 100;
+  //  int ss = millis();
+  //  if(ss % a == 0) {
+  //    engine.add(new Bullet());
+  //  }
+  //  //while (j > 0) {
+      
+  //  //  j--;
+      
+  //  //  if(j == 1) {
+  //  //    engine.add(new Bullet());
+  //  //  }
+  //  //}
+   
+  }
+  
+
+
+  
+
+
+
+</script>
+
+
+<!-- 
+/* @pjs preload="/data/book.png,/data/locker.png,/data/hallway.png,/data/waterbomb.png"; */
+
+// import processing.sound.*;
+// import ddf.minim.*;
+// SoundFile songfile;
+// SqrOsc squaresound;
+// Pulse pulsesound;
+// Minim minim;
+
+// AudioPlayer songplayer; -->
+
